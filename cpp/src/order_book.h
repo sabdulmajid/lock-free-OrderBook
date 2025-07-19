@@ -1,10 +1,12 @@
 #pragma once
 
 #include "order.h"
+#include "trade.h"
 #include <map>
 #include <deque>
 #include <functional>
 #include <optional>
+#include <vector>
 
 struct PriceLevel {
     uint64_t total_quantity;
@@ -15,7 +17,7 @@ class OrderBook {
 public:
     OrderBook();
 
-    void add_order(Order& order);
+    std::vector<Trade> add_order(Order& order);
     bool cancel_order(uint64_t order_id, Side side, double price);
     bool modify_order(uint64_t order_id, Side side, double price, uint64_t new_quantity);
 
@@ -24,6 +26,7 @@ public:
 
 
 private:
+    std::vector<Trade> match_order(Order& order);
     std::map<double, PriceLevel, std::greater<double>> bids;
     std::map<double, PriceLevel> asks;
 };

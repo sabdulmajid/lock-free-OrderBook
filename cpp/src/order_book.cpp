@@ -4,20 +4,88 @@
 
 OrderBook::OrderBook() {}
 
-void OrderBook::add_order(Order& order) {
+std::vector<Trade> OrderBook::match_order(Order& order) {
+    std::vector<Trade> trades;
+    if (order.side == Side::Buy) {
+        for (auto it = asks.begin(); it != asks.end(); ) {
+            auto& price = it->first;
+            auto& price_level = it->second;
+            if (order.price < price || order.quantity == 0) {
+                break;
+            }
+            for (auto& maker_order : price_level.orders) {
+                if (order.quantity == 0) {
+                    break;
+                }
+                uint64_t trade_quantity = std::min(order.quantity, maker_order.quantity);
+                trades.emplace_back(order.order_id, maker_order.order_id, trade_quantity, price);
+                order.quantity -= trade_quantity;
+                maker_order.quantity -= trade_quantity;
+                price_level.total_quantity -= trade_quantity;
+            }
+            price_level.orders.erase(
+                std::remove_if(price_level.orders.begin(), price_level.orders.end(),
+                               [](const Order& o) { return o.quantity == 0; }),
+                price_level.orders.end());
+            
+            if (price_level.orders.empty()) {
+                it = asks.erase(it);
+            } else {
+                ++it;
+            }
+        }
+    } else { // Side::Sell
+        for (auto it = bids.begin(); it != bids.end(); ) {
+            auto& price = it->first;
+            auto& price_level = it->second;
+            if (order.price > price || order.quantity == 0) {
+                break;
+            }
+            for (auto& maker_order : price_level.orders) {
+                if (order.quantity == 0) {
+                    break;
+                }
+                uint64_t trade_quantity = std::min(order.quantity, maker_order.quantity);
+                trades.emplace_back(order.order_id, maker_order.order_id, trade_quantity, price);
+                order.quantity -= trade_quantity;
+                maker_order.quantity -= trade_quantity;
+                price_level.total_quantity -= trade_quantity;
+            }
+            price_level.orders.erase(
+                std::remove_if(price_level.orders.begin(), price_level.orders.end(),
+                               [](const Order& o) { return o.quantity == 0; }),
+                price_level.orders.end());
+
+            if (price_level.orders.empty()) {
+                it = bids.erase(it);
+            } else {
+                ++it;
+            }
+        }
+    }
+    return trades;
+}
+
+std::vector<Trade> OrderBook::add_order(Order& order) {
     order.timestamp = std::chrono::duration_cast<std::chrono::nanoseconds>(
         std::chrono::system_clock::now().time_since_epoch()
     ).count();
 
-    if (order.side == Side::Buy) {
-        auto& price_level = bids[order.price];
-        price_level.total_quantity += order.quantity;
-        price_level.orders.push_back(order);
-    } else {
-        auto& price_level = asks[order.price];
-        price_level.total_quantity += order.quantity;
-        price_level.orders.push_back(order);
+    auto trades = match_order(order);
+
+    if (order.quantity > 0) {
+        if (order.side == Side::Buy) {
+            auto& price_level = bids[order.price];
+            price_level.total_quantity += order.quantity;
+            price_level.orders.push_back(order);
+        } else {
+            auto& price_level = asks[order.price];
+            price_level.total_quantity += order.quantity;
+            price_level.orders.push_back(order);
+        }
     }
+
+    return trades;
 }
 
 bool OrderBook::cancel_order(uint64_t order_id, Side side, double price) {

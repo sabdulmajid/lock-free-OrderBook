@@ -1,19 +1,35 @@
-cmake_minimum_required(VERSION 3.20)
+cmake_minimum_required(VERSION 3.10)
 project(order_book_cpp)
 
+# C++ Standard
 set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-add_executable(order_book_cpp src/main.cpp src/order.cpp src/order_book.cpp)
+# Build type
+if (NOT CMAKE_BUILD_TYPE)
+  set(CMAKE_BUILD_TYPE Release CACHE STRING "Build configuration" FORCE)
+endif()
 
-# Enable testing
+# --- Library ---
+add_library(order_book_lib src/order.cpp src/order_book.cpp)
+target_include_directories(order_book_lib PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/src)
+
+# --- Main Executable ---
+add_executable(order_book_cpp src/main.cpp)
+target_link_libraries(order_book_cpp PRIVATE order_book_lib)
+
 enable_testing()
 
-# Add Google Test
-# You will need to have Google Test installed or add it to the project
-# add_subdirectory(googletest)
-# target_link_libraries(order_book_cpp GTest::gtest_main)
+# --- Benchmarks ---
+find_package(Threads REQUIRED)
+set(BENCHMARK_ENABLE_TESTING OFF)
+add_subdirectory(third_party/benchmark)
 
-# Add benchmarks
-# add_subdirectory(googlebenchmark)
-# target_link_libraries(order_book_cpp benchmark::benchmark_main)
+add_executable(order_book_benches benches/order_book_benches.cpp)
+target_link_libraries(order_book_benches PRIVATE
+  order_book_lib
+  benchmark::benchmark
+  benchmark::benchmark_main
+  Threads::Threads
+)
+target_include_directories(order_book_benches PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/src)
