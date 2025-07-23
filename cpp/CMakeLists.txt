@@ -33,3 +33,21 @@ target_link_libraries(order_book_benches PRIVATE
   Threads::Threads
 )
 target_include_directories(order_book_benches PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/src)
+  
+# --- Concurrent Benchmarks ---
+add_executable(concurrent_queue_benches benches/concurrent_queue_benches.cpp)
+target_link_libraries(concurrent_queue_benches PRIVATE
+  benchmark::benchmark
+  benchmark::benchmark_main
+  Threads::Threads
+)
+target_include_directories(concurrent_queue_benches PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/src)
+
+add_executable(concurrent_order_book_benches benches/concurrent_order_book_benches.cpp)
+target_link_libraries(concurrent_order_book_benches PRIVATE
+  order_book_lib
+  benchmark::benchmark
+  benchmark::benchmark_main
+  Threads::Threads
+)
+target_include_directories(concurrent_order_book_benches PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/src)
