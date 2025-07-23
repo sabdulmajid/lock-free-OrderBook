@@ -80,7 +80,29 @@ Both implementations were benchmarked on single-threaded operations to establish
 
 These results represent the foundation for lock-free optimizations in Phase 2, where atomic operations and memory ordering will be critical for both implementations.
 
-**Rust Integration**
+---
+
+## Concurrent Benchmarks
+
+### Rust Concurrent Benchmarks
+
+In Phase 2, we measured the performance of our lock-free SPSC/MPSC queue and the concurrent order book ingestion under multi-threaded workloads:
+
+| Test                               | Time (ms) |
+|------------------------------------|-----------|
+| SPSC Queue (100k ops)              | ~1.63     |
+| MPSC Queue (4×50k ops)             | ~6.13     |
+| Concurrent Order Book (4×10k ops)  | ~8.2      |
+
+**Findings:**
+- The SPSC queue achieved near-linear throughput with minimal overhead, showcasing the efficiency of a ring buffer.
+- The MPSC queue added synchronization cost from multiple producers, resulting in modestly higher latency.
+- The concurrent order book benchmark uses a shared `ArrayQueue` for order handoff: producers enqueue orders lock-free, while a single consumer dequeues and applies them under a `Mutex`. This highlights our first lock-free concurrency building block before moving to a fully lock-free order book.
+- The lock-free ring buffer (`OrderQueue`) enables producers to enqueue without blocking, paving the way for a fully lock-free matching engine.
+
+---
+
+## Rust Integration
 Add the library to your `Cargo.toml`:
 ```toml
 [dependencies]

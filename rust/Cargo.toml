@@ -15,6 +15,14 @@ criterion = "0.5"
 [[bench]]
 name = "order_book_benches"
 harness = false
+
+[[bench]]
+name = "concurrent_queue_bench"
+harness = false
+
+[[bench]]
+name = "concurrent_order_book_bench"
+harness = false
 [[bin]]
 name = "order_book_rust"
 path = "src/main.rs"
