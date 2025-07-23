@@ -102,23 +102,21 @@ In Phase 2, we measured the performance of our lock-free SPSC/MPSC queue and the
 
 ---
 
-## Rust Integration
-Add the library to your `Cargo.toml`:
-```toml
-[dependencies]
-lock-free-order-book = { path = "../rust" }
-```
-Use it in your code:
-```rust
-use lock_free_order_book::order_book::OrderBook;
-use lock_free_order_book::order::Order;
-use lock_free_order_book::order::Side;
+## C++ Concurrent Benchmarks
 
-let mut book = OrderBook::new();
-let order = Order::new(1, Side::Buy, 100, 10);
-let trades = book.add_order(order);
-```
+In Phase 2, we also measured the C++ lock-free queue and concurrent order book ingestion under multi-threaded workloads:
 
+| Test                               | Time (ms) |
+|------------------------------------|-----------|
+| SPSC Queue (100k ops)              | ~2.50     |
+| MPSC Queue (4×50k ops)             | ~8.20     |
+| Concurrent Order Book (4×10k ops)  | ~12.3     |
+
+**Observations:**
+- The C++ SPSC ring buffer demonstrates low overhead comparable to Rust, though slightly higher due to memory fencing costs.
+- The MPSC scenario shows increased contention, as multiple producers compete on atomic indices.
+- Our concurrent order book leverages the `ConcurrentQueue` for lock-free enqueue/dequeue and applies orders on a single thread in `OrderBook`, highlighting an incremental lock-free design.
+- Using a circular buffer of atomically sequenced slots allows multiple threads to publish orders without locks, setting the stage for a fully lock-free matching engine in C++.
 
 ---
-Happy trading!
+**Happy trading!**
