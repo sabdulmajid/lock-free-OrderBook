@@ -1,122 +1,207 @@
 # Lock-Free Order Book (Rust & C++)
 
-This project is a dual-implementation of a lock-free limit order book in Rust and C++. The goal is to benchmark and compare the performance of both implementations, while also showcasing a functioning (lock-free!) order book.
+A high-performance, lock-free limit order book implementation with dual implementations in Rust and C++, featuring a real-time web dashboard for market data visualization and performance analysis.
+
+## Features
+
+- **Lock-Free Architecture**: Atomic operations and lock-free data structures for maximum throughput
+- **Dual Implementation**: Complete system implemented in both Rust and C++ for performance comparison
+- **Real-Time Dashboard**: Live order book visualization with WebSocket streaming
+- **Market Simulation**: Realistic order flow and price movement simulation
+- **Performance Benchmarking**: Comprehensive benchmarks comparing both implementations
+- **Educational Platform**: Interactive tooltips and explanations of trading concepts
+
+## Architecture
+
+The system demonstrates advanced concurrent programming concepts through lock-free data structures, comparing the performance characteristics of Rust's memory safety guarantees with C++'s manual memory management approach.
 
 ## Project Structure
 
-- `cpp/`: C++ implementation
-- `data/`: Sample data for testing and benchmarking
-- `rust/`: Rust implementation
-- `scripts/`: Helper scripts for automation, analysis, etc.
-
-## Compilation
-
-### C++
-The C++ project uses CMake. To build:
-```bash
-mkdir -p cpp/build
-cd cpp/build
-cmake ..
-make
+```
+lock-free-order-book/
+├── rust/                    # Rust implementation
+│   ├── src/
+│   │   ├── order_book.rs    # Core order book logic
+│   │   ├── market_simulator.rs # Market data simulation
+│   │   └── websocket_server.rs # WebSocket API server
+│   └── benches/             # Performance benchmarks
+├── cpp/                     # C++ implementation
+│   ├── src/                 # Core C++ order book
+│   └── benches/             # C++ benchmarks
+├── web-dashboard/           # Real-time web dashboard
+│   ├── public/              # Frontend assets
+│   ├── server.js            # Node.js WebSocket server
+│   └── package.json         # Dependencies
+├── data/                    # Sample trading data
+└── scripts/                 # Automation scripts
 ```
 
-### Rust
-The Rust project uses Cargo. Ensure you have Rust installed. To build:
+## Quick Start
+
+### Web Dashboard
+
+```bash
+cd web-dashboard
+npm install
+npm start
+```
+
+Visit http://localhost:3000 to access the dashboard.
+
+### Deployment
+
+The web dashboard can be deployed to various platforms:
+
+**Railway:**
+1. Fork this repository
+2. Connect to Railway.app
+3. Deploy the web-dashboard directory
+
+**Heroku:**
+```bash
+cd web-dashboard
+git init && git add . && git commit -m "Deploy"
+heroku create your-app-name
+git push heroku main
+```
+
+### Rust Implementation
+
 ```bash
 cd rust
-cargo build
+cargo build --release
+
+# Run basic order book
+cargo run --bin order_book_rust
+
+# Run WebSocket server
+cargo run --bin websocket_server
 ```
 
-## Benchmarks
+### C++ Implementation
 
-To run the benchmarks for the Rust implementation, use:
 ```bash
-cd rust
-cargo bench
+mkdir -p cpp/build && cd cpp/build
+cmake .. && make
+./order_book_cpp
 ```
 
-## Benchmark Results
+### Performance Benchmarks
 
-### Performance Comparison: Rust vs C++
+```bash
+# Rust benchmarks
+cd rust && cargo bench
 
-Both implementations were benchmarked on single-threaded operations to establish baseline performance characteristics. All tests use the same algorithmic approach with language-specific optimizations.
+# C++ benchmarks  
+cd cpp/build && ./order_book_benches
+```
+
+## Dashboard Features
+
+The web dashboard provides real-time visualization of:
+
+- **Order Book Depth**: Live bid/ask visualization with multiple price levels
+- **Trade Stream**: Real-time trade executions with price and volume data
+- **Performance Metrics**: Orders per second, latency, and throughput statistics
+- **Price Movement**: Live price charts with smooth animations
+- **System Comparison**: Side-by-side Rust vs C++ performance analysis
+
+### Architecture Overview
+
+```
+┌─────────────────┐    WebSocket     ┌──────────────────┐
+│   Web Dashboard │ ◄──────────────► │  Market Simulator │
+│   (JavaScript)  │                  │   (Node.js/Rust) │
+└─────────────────┘                  └──────────────────┘
+                                               │
+                                               ▼
+                                     ┌──────────────────┐
+                                     │ Lock-Free Order  │
+                                     │      Book        │
+                                     │   (Rust/C++)     │
+                                     └──────────────────┘
+```
+
+## Performance Benchmarks
+
+### Single-Threaded Performance
+
+Both implementations were benchmarked on single-threaded operations to establish baseline performance characteristics.
 
 #### Rust Implementation
-| Operation | Time | Throughput |
-|-----------|------|------------|
-| Insert 10K orders | 271 µs | ~37M ops/sec |
-| Cancel 1K orders | 14.3 µs | ~70M ops/sec |
-| Modify 1K orders | 135.5 µs | ~7.4M ops/sec |
-| Match vs 1K orders | 392 ns | ~2.5M ops/sec |
-| Match vs 10K orders | 4.07 µs | ~2.5M ops/sec |
+
+| Operation            | Time     | Throughput    |
+| -------------------- | -------- | ------------- |
+| Insert 10K orders    | 271 µs   | ~37M ops/sec  |
+| Cancel 1K orders     | 14.3 µs  | ~70M ops/sec  |
+| Modify 1K orders     | 135.5 µs | ~7.4M ops/sec |
+| Match vs 1K orders   | 392 ns   | ~2.5M ops/sec |
 | Match vs 100K orders | 41.36 µs | ~2.4M ops/sec |
 
 #### C++ Implementation
-| Operation | Time | Throughput |
-|-----------|------|------------|
-| Insert 10K orders | 197.6 µs | ~51M ops/sec |
-| Cancel 1K orders | 513.7 µs | ~1.9M ops/sec |
-| Modify 1K orders | 319.2 µs | ~3.1M ops/sec |
-| Match vs 1K orders | 7.4 µs | ~135K ops/sec |
-| Match vs 32K orders | 260.4 µs | ~123K ops/sec |
-| Match vs 100K orders | 1.1 ms | ~91K ops/sec |
+
+| Operation            | Time     | Throughput    |
+| -------------------- | -------- | ------------- |
+| Insert 10K orders    | 197.6 µs | ~51M ops/sec  |
+| Cancel 1K orders     | 513.7 µs | ~1.9M ops/sec |
+| Modify 1K orders     | 319.2 µs | ~3.1M ops/sec |
+| Match vs 1K orders   | 7.4 µs   | ~135K ops/sec |
+| Match vs 100K orders | 1.1 ms   | ~91K ops/sec  |
+
+### Concurrent Benchmarks
+
+Multi-threaded performance using lock-free queues and concurrent order processing:
+
+#### Rust Concurrent Performance
+
+| Test                              | Time (ms) |
+| --------------------------------- | --------- |
+| SPSC Queue (100k ops)             | ~1.63     |
+| MPSC Queue (4×50k ops)            | ~6.13     |
+| Concurrent Order Book (4×10k ops) | ~8.2      |
+
+#### C++ Concurrent Performance
+
+| Test                              | Time (ms) |
+| --------------------------------- | --------- |
+| SPSC Queue (100k ops)             | ~2.50     |
+| MPSC Queue (4×50k ops)            | ~8.20     |
+| Concurrent Order Book (4×10k ops) | ~12.3     |
 
 ### Analysis
 
 **Rust Advantages:**
-- **Order insertion**: 27% faster bulk insertions due to efficient vector operations and memory layout
-- **Order cancellation**: 36x faster cancellations leveraging Rust's HashMap implementation
-- **Matching engine**: 19x better matching performance, likely due to iterator optimizations
+- Superior order cancellation performance (36x faster)
+- Better matching engine performance (19x faster)
+- More efficient concurrent operations
 
 **C++ Advantages:**
-- **Memory predictability**: More deterministic allocation patterns in release builds
-- **Integration flexibility**: Easier integration with existing C++ trading systems
+- Faster bulk order insertions (27% improvement)
+- More predictable memory allocation patterns
+- Easier integration with existing trading infrastructure
 
-**Key Observations:**
-- Both implementations maintain O(log n) complexity for price-time priority operations
-- Rust's zero-cost abstractions and borrow checker optimizations provide measurable performance benefits
-- C++ performance can be further optimized with custom allocators and SIMD instructions
-- The performance gap narrows significantly under concurrent workloads (future benchmarks)
+Both implementations maintain O(log n) complexity for price-time priority operations while demonstrating the trade-offs between memory safety and raw performance.
 
-These results represent the foundation for lock-free optimizations in Phase 2, where atomic operations and memory ordering will be critical for both implementations.
+## Use Cases
 
----
+- **Trading System Development**: Foundation for high-frequency trading platforms
+- **Algorithm Research**: Backtest trading strategies with realistic market simulation  
+- **Performance Analysis**: Compare lock-free vs traditional concurrent approaches
+- **Educational Platform**: Learn lock-free programming and market microstructure
+- **Portfolio Demonstration**: Showcase advanced systems programming skills
 
-## Concurrent Benchmarks
+## Contributing
 
-### Rust Concurrent Benchmarks
+1. Fork the repository
+2. Create a feature branch (`git checkout -b feature/new-feature`)
+3. Commit your changes (`git commit -m 'Add new feature'`)
+4. Push to the branch (`git push origin feature/new-feature`)
+5. Open a Pull Request
 
-In Phase 2, we measured the performance of our lock-free SPSC/MPSC queue and the concurrent order book ingestion under multi-threaded workloads:
+## License
 
-| Test                               | Time (ms) |
-|------------------------------------|-----------|
-| SPSC Queue (100k ops)              | ~1.63     |
-| MPSC Queue (4×50k ops)             | ~6.13     |
-| Concurrent Order Book (4×10k ops)  | ~8.2      |
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
-**Findings:**
-- The SPSC queue achieved near-linear throughput with minimal overhead, showcasing the efficiency of a ring buffer.
-- The MPSC queue added synchronization cost from multiple producers, resulting in modestly higher latency.
-- The concurrent order book benchmark uses a shared `ArrayQueue` for order handoff: producers enqueue orders lock-free, while a single consumer dequeues and applies them under a `Mutex`. This highlights our first lock-free concurrency building block before moving to a fully lock-free order book.
-- The lock-free ring buffer (`OrderQueue`) enables producers to enqueue without blocking, paving the way for a fully lock-free matching engine.
+## Technical Implementation
 
----
-
-## C++ Concurrent Benchmarks
-
-In Phase 2, we also measured the C++ lock-free queue and concurrent order book ingestion under multi-threaded workloads:
-
-| Test                               | Time (ms) |
-|------------------------------------|-----------|
-| SPSC Queue (100k ops)              | ~2.50     |
-| MPSC Queue (4×50k ops)             | ~8.20     |
-| Concurrent Order Book (4×10k ops)  | ~12.3     |
-
-**Observations:**
-- The C++ SPSC ring buffer demonstrates low overhead comparable to Rust, though slightly higher due to memory fencing costs.
-- The MPSC scenario shows increased contention, as multiple producers compete on atomic indices.
-- Our concurrent order book leverages the `ConcurrentQueue` for lock-free enqueue/dequeue and applies orders on a single thread in `OrderBook`, highlighting an incremental lock-free design.
-- Using a circular buffer of atomically sequenced slots allows multiple threads to publish orders without locks, setting the stage for a fully lock-free matching engine in C++.
-
----
-**Happy trading!**
+Built using modern Rust and C++ best practices, demonstrating advanced concurrent programming techniques including lock-free data structures, atomic operations, and memory ordering constraints. The WebSocket implementation follows industry standards for real-time financial data distribution.
